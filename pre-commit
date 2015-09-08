@@ -18,44 +18,44 @@ upsearch () {
 
 WP_TESTS_DIR=/tmp/wordpress-tests/
 
-YUI_COMPRESSOR_CHECK=1
-CODECEPTION_CHECK=1
-DISALLOW_EXECUTE_BIT=0
-PARENT_DIR_SLUG="$(basename "$(dirname "$(pwd)")")"
-SELF_DIR=$( pwd )
-PHPCS_DIR=/tmp/phpcs
-PHPCS_GITHUB_SRC=squizlabs/PHP_CodeSniffer
-PHPCS_GIT_TREE=master
-PHPCS_IGNORE='tests/*,vendor/*'
-WPCS_DIR=/tmp/wpcs
-WPCS_GITHUB_SRC=WordPress-Coding-Standards/WordPress-Coding-Standards
-WPCS_GIT_TREE=master
-PHPCS_FILE=$( upsearch phpcs.ruleset.xml )
-WPCS_STANDARD=$(if [ ! -z "$PHPCS_FILE" ]; then echo "$PHPCS_FILE"; else echo WordPress-Core; fi)
-JSCS_CONFIG="$( upsearch .jscsrc )"
-if [ -z "$JSCS_CONFIG" ]; then
-	JSCS_CONFIG="$( upsearch .jscs.json )"
-fi
-PATH_INCLUDES=./
-ENV_FILE=$( upsearch .ci-env.sh )
-if [ ! -z "$ENV_FILE" ]; then
-	source "$ENV_FILE"
-fi
-
-MESSAGE="Checking staged changes..."
-GIT_STATUS_EGREP='^[MARC].+'
-
-for i; do
-	case "$i"
-	in
-		-m)
-			MESSAGE="Checking any uncommitted changes..."
-			GIT_STATUS_EGREP='^.?[MARC].+'
-			shift;;
-	esac
-done
-
-echo "$MESSAGE"
+#YUI_COMPRESSOR_CHECK=1
+#CODECEPTION_CHECK=1
+#DISALLOW_EXECUTE_BIT=0
+#PARENT_DIR_SLUG="$(basename "$(dirname "$(pwd)")")"
+#SELF_DIR=$( pwd )
+#PHPCS_DIR=/tmp/phpcs
+#PHPCS_GITHUB_SRC=squizlabs/PHP_CodeSniffer
+#PHPCS_GIT_TREE=master
+#PHPCS_IGNORE='tests/*,vendor/*'
+#WPCS_DIR=/tmp/wpcs
+#WPCS_GITHUB_SRC=WordPress-Coding-Standards/WordPress-Coding-Standards
+#WPCS_GIT_TREE=master
+#PHPCS_FILE=$( upsearch phpcs.ruleset.xml )
+#WPCS_STANDARD=$(if [ ! -z "$PHPCS_FILE" ]; then echo "$PHPCS_FILE"; else echo WordPress-Core; fi)
+#JSCS_CONFIG="$( upsearch .jscsrc )"
+#if [ -z "$JSCS_CONFIG" ]; then
+#	JSCS_CONFIG="$( upsearch .jscs.json )"
+#fi
+#PATH_INCLUDES=./
+#ENV_FILE=$( upsearch .ci-env.sh )
+#if [ ! -z "$ENV_FILE" ]; then
+#	source "$ENV_FILE"
+#fi
+#
+#MESSAGE="Checking staged changes..."
+#GIT_STATUS_EGREP='^[MARC].+'
+#
+#for i; do
+#	case "$i"
+#	in
+#		-m)
+#			MESSAGE="Checking any uncommitted changes..."
+#			GIT_STATUS_EGREP='^.?[MARC].+'
+#			shift;;
+#	esac
+#done
+#
+#echo "$MESSAGE"
 
 # Check for staged JS files
 STAGED_JS_FILES=( $(git status --porcelain -- $PATH_INCLUDES | sed 's/[^ ]* -> *//g' | egrep $GIT_STATUS_EGREP'\.js$' | cut -c4-) )

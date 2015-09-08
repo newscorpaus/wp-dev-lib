@@ -4,40 +4,43 @@ set -e
 shopt -s expand_aliases
 
 # TODO: These should not override any existing environment variables
-export WP_CORE_DIR=/tmp/wordpress
-export WP_TESTS_DIR=${WP_CORE_DIR}/tests/phpunit
-export PLUGIN_DIR=$(pwd)
-export PLUGIN_SLUG=$(basename $(pwd) | sed 's/^wp-//')
-export PHPCS_DIR=/tmp/phpcs
-export PHPCS_GITHUB_SRC=squizlabs/PHP_CodeSniffer
-export PHPCS_GIT_TREE=master
-export PHPCS_IGNORE='tests/*,vendor/*,dev-lib/*'
-export WPCS_DIR=/tmp/wpcs
-export WPCS_GITHUB_SRC=WordPress-Coding-Standards/WordPress-Coding-Standards
-export WPCS_GIT_TREE=master
-export YUI_COMPRESSOR_CHECK=1
-export DISALLOW_EXECUTE_BIT=0
-export LIMIT_TRAVIS_PR_CHECK_SCOPE=files # when set to 'patches', limits reports to only lines changed; TRAVIS_PULL_REQUEST must not be 'false'
-export PATH_INCLUDES=./
-export WPCS_STANDARD=$(if [ -e phpcs.ruleset.xml ]; then echo phpcs.ruleset.xml; else echo WordPress-Core; fi)
-if [ -e .jscsrc ]; then
-	export JSCS_CONFIG=.jscsrc
-elif [ -e .jscs.json ]; then
-	export JSCS_CONFIG=.jscs.json
-fi
-
-# Load a .ci-env.sh to override the above environment variables
-if [ -e .ci-env.sh ]; then
-	source .ci-env.sh
-fi
+#export WP_CORE_DIR=/tmp/wordpress
+#export WP_TESTS_DIR=${WP_CORE_DIR}/tests/phpunit
+#export PROJECT_DIR=$(pwd)
+#export PLUGIN_SLUG=$(basename $(pwd) | sed 's/^wp-//')
+#export PHPCS_DIR=/tmp/phpcs
+#export PHPCS_GITHUB_SRC=squizlabs/PHP_CodeSniffer
+#export PHPCS_GIT_TREE=master
+#export PHPCS_IGNORE='tests/*,vendor/*,dev-lib/*'
+#export WPCS_DIR=/tmp/wpcs
+#export WPCS_GITHUB_SRC=WordPress-Coding-Standards/WordPress-Coding-Standards
+#export WPCS_GIT_TREE=master
+#export YUI_COMPRESSOR_CHECK=1
+#export DISALLOW_EXECUTE_BIT=0
+#export LIMIT_TRAVIS_PR_CHECK_SCOPE=files # when set to 'patches', limits reports to only lines changed; TRAVIS_PULL_REQUEST must not be 'false'
+#export PATH_INCLUDES=./
+#export WPCS_STANDARD=$(if [ -e phpcs.ruleset.xml ]; then echo phpcs.ruleset.xml; else echo WordPress-Core; fi)
+#if [ -e .jscsrc ]; then
+#	export JSCS_CONFIG=.jscsrc
+#elif [ -e .jscs.json ]; then
+#	export JSCS_CONFIG=.jscs.json
+#fi
+#
+# Load dev-lib config to override the above environment variables
+#if [ -e .ci-env.sh ]; then
+#	source .ci-env.sh
+#fi
+#if [ -e .dev-lib ]; then
+#	source .dev-lib
+#fi
 
 # Install the WordPress Unit Tests
 if [ -e phpunit.xml ] || [ -e phpunit.xml.dist ]; then
 	bash $DEV_LIB_PATH/install-wp-tests.sh wordpress_test root '' localhost $WP_VERSION
 	cd ${WP_CORE_DIR}/src/wp-content/plugins
-	mv $PLUGIN_DIR $PLUGIN_SLUG
+	mv $PROJECT_DIR $PLUGIN_SLUG
 	cd $PLUGIN_SLUG
-	ln -s $(pwd) $PLUGIN_DIR
+	ln -s $(pwd) $PROJECT_DIR
 	echo "Plugin location: $(pwd)"
 
 	if ! command -v phpunit >/dev/null 2>&1; then

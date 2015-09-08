@@ -27,6 +27,9 @@ function download {
 		curl $(verbose_arg) -L -s "$1" > "$2"
 	elif command -v wget >/dev/null 2>&1; then
 		wget $(verbose_arg) -n -O "$2" "$1"
+	else
+		echo ''
+		exit 1
 	fi
 }
 
@@ -91,7 +94,7 @@ function install_test_suite {
 
 }
 
-function install_db() {
+function install_db {
 	if ! command -v mysqladmin >/dev/null 2>&1; then
 		echo "install_db failure: mysqladmin is not present"
 		return 1
@@ -126,6 +129,8 @@ function phpunit_tests {
 	echo
 	echo "## PHPUnit tests"
 
+	# @todo We need to be able to run these in Vagrant instead, including the exporting of the environment variables
+
 	if [ -z "$PHPUNIT_CONFIG" ]; then
 		echo "Skipping since PHPUNIT_CONFIG is empty."
 		return
@@ -144,6 +149,8 @@ function phpunit_tests {
 	export WP_CORE_DIR
 	export WP_TESTS_DIR
 
+	# @todo Only do this if there are PHP files that are changed
+
 	# Install the WordPress Unit Tests
 	if [ "$WP_INSTALL_TESTS" == 'true' ]; then
 		if ! install_wp; then
@@ -159,7 +166,19 @@ function phpunit_tests {
 
 	# Rsync the files into the right location
 	mkdir -p "$INSTALL_PATH"
-	rsync -a $(verbose_arg) --delete --exclude .git "$PROJECT_DIR/" "$INSTALL_PATH/"
+	rsync -a $(verbose_arg) --exclude .git/hooks --delete "$PROJECT_DIR/" "$INSTALL_PATH/"
+	cd "$INSTALL_PATH"
+
+	# Remove untracked files when not working with
+	if [ "$DIFF_HEAD" != 'WORKING' ]; then
+		git clean -d --force --quiet
+	fi
+	if [ "$DIFF_HEAD" == 'STAGE' ]; then
+		git checkout .
+	fi
+	git status
+
+	# @todo Delete files that are not in Git?
 	echo "Location: $INSTALL_PATH"
 
 	if ! command -v phpunit >/dev/null 2>&1; then
@@ -170,7 +189,6 @@ function phpunit_tests {
 	fi
 
 	# Run the tests
-	cd "$INSTALL_PATH"
 	phpunit $(verbose_arg) --configuration "$PHPUNIT_CONFIG"
 	cd - > /dev/null
 }
@@ -201,7 +219,13 @@ fi
 CHECK_SCOPE=${CHECK_SCOPE:-patches} # 'all', 'changed-files', 'patches'
 
 DIFF_BASE=${DIFF_BASE:-HEAD}
-DIFF_HEAD=${DIFF_HEAD:-STAGE}
+DIFF_HEAD=${DIFF_HEAD:-WORKING}
+
+# treeishA to treeishB (git diff treeishA...treeishB)
+# treeish to STAGE (git diff --staged treeish)
+# HEAD to WORKING [default] (git diff HEAD)
+
+# @todo DIFF_HEAD=WORKING
 
 PHPCS_PHAR_URL=https://squizlabs.github.io/PHP_CodeSniffer/phpcs.phar
 PHPCS_RULESET_FILE=$( upsearch phpcs.ruleset.xml )
@@ -308,14 +332,15 @@ if [ "$DIFF_HEAD" == 'INDEX' ]; then
 	DIFF_HEAD='STAGE'
 fi
 
-if [ "$DIFF_BASE" == 'HEAD' ] && [ "$DIFF_HEAD" != 'STAGE' ]; then
-	echo "Error: when DIFF_BASE is 'HEAD' then DIFF_HEAD must be 'STAGE'" 1>&2
+if [ "$DIFF_BASE" == 'HEAD' ] && [ "$DIFF_HEAD" != 'STAGE' ] && [ "$DIFF_HEAD" != 'WORKING' ]; then
+	echo "Error: when DIFF_BASE is 'HEAD' then DIFF_HEAD must be 'STAGE' or 'WORKING' (you supplied '$DIFF_HEAD')" 1>&2
 	exit 1
 fi
-if [ "$DIFF_HEAD" == 'STAGE' ] && [ "$DIFF_BASE" != 'HEAD' ]; then
-	echo "Error: when DIFF_HEAD is 'STAGE' then DIFF_BASE must be 'HEAD'" 1>&2
+if [ "$DIFF_HEAD" == 'WORKING' ] && [ "$DIFF_BASE" != 'STAGE' ] && [ "$DIFF_BASE" != 'HEAD' ]; then
+	echo "Error: when DIFF_HEAD is 'WORKING' then DIFF_BASE must be 'STAGE' or 'HEAD' (you supplied '$DIFF_BASE')" 1>&2
 	exit 1
 fi
+
 CHECK_SCOPE=$( tr '[A-Z]' '[a-z]' <<< "$CHECK_SCOPE" )
 if [ "$CHECK_SCOPE" != 'all' ] && [ "$CHECK_SCOPE" != 'changed-files' ] && [ "$CHECK_SCOPE" != 'patches' ]; then
 	echo "Error: CHECK_SCOPE must be 'all', 'changed-files', or 'patches'" 1>&2
